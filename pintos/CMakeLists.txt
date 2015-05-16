@@ -1,0 +1,77 @@
+cmake_minimum_required(VERSION 3.2)
+project(pintos)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
+set(SOURCE_FILES
+    src/arm_asm/contextSwitch.s
+    src/arm_asm/drawing.s
+    src/arm_asm/font.bin
+    src/arm_asm/frameBufferInfo.s
+    src/arm_asm/gpioFunction.s
+    src/arm_asm/interruptsHandlers.s
+    src/arm_asm/mailbox.s
+    src/arm_asm/memoryCopy.s
+    src/arm_asm/start.s
+    src/devices/bcm2835.h
+    src/devices/framebuffer.c
+    src/devices/framebuffer.h
+    src/devices/gpio.c
+    src/devices/gpio.h
+    src/devices/screen.h
+    src/devices/serial.c
+    src/devices/serial.h
+    src/devices/timer.c
+    src/devices/timer.h
+    src/devices/video.c
+    src/devices/video.h
+    src/lib/kernel/bitmap.c
+    src/lib/kernel/bitmap.h
+    src/lib/kernel/console.c
+    src/lib/kernel/console.h
+    src/lib/kernel/hash.c
+    src/lib/kernel/hash.h
+    src/lib/kernel/list.c
+    src/lib/kernel/list.h
+    src/lib/ctype.h
+    src/lib/debug.c
+    src/lib/debug.h
+    src/lib/inttypes.h
+    src/lib/limits.h
+    src/lib/packed.h
+    src/lib/random.c
+    src/lib/random.h
+    src/lib/round.h
+    src/lib/stdarg.h
+    src/lib/stdbool.h
+    src/lib/stddef.h
+    src/lib/stdint.h
+    src/lib/stdio.c
+    src/lib/stdio.h
+    src/lib/stdlib.c
+    src/lib/stdlib.h
+    src/lib/string.c
+    src/lib/string.h
+    src/lib/syscall-nr.h
+    src/libgcc/libgcc.a
+    src/threads/flags.h
+    src/threads/init.c
+    src/threads/init.h
+    src/threads/interrupt.c
+    src/threads/interrupt.h
+    src/threads/malloc.c
+    src/threads/malloc.h
+    src/threads/palloc.c
+    src/threads/palloc.h
+    src/threads/synch.c
+    src/threads/synch.h
+    src/threads/thread.c
+    src/threads/thread.h
+    src/threads/vaddr.h
+    src/versions/README_V1_01
+    src/config.txt
+    src/kernel.ld
+    src/Makefile
+    src/README)
+
+add_executable(pintos ${SOURCE_FILES})
