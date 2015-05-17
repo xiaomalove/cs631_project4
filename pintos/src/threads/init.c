@@ -23,15 +23,27 @@
 static size_t user_page_limit = SIZE_MAX;
 
 /* Tasks for the Threads. */
-static void task_0(void *);
-static void task_1(void *);
-static void task_2(void *);
-static void task_3(void *);
-static void task_4(void *);
-static void task_5(void *);
-static void task_6(void *);
-static void init_all_threads();
-static struct lock lock_task;
+static struct semaphore task_sem;
+
+//static void hello_test(void *);
+/*
+struct wait_node {
+  struct lock mutex;
+  struct condition cv;
+  bool done;
+};
+
+
+static struct wait_node sync_node;
+
+static void t_wait(struct wait_node *wn);
+static void t_exit(struct wait_node *wn);
+*/
+//static void cv_test(void *);
+static void B(void *);
+static void c(void *);
+static void shell(void *);
+
 
 /*
  * kernel.c
@@ -46,6 +58,7 @@ static void test_swi_interrupt() {
   generate_swi_interrupt(); // Function defined in interrupts.s
 }
 
+static int tid_b;
 
 /* Initializes the Operating System. The interruptions have to be disabled at entrance.
 *
@@ -64,7 +77,7 @@ void init() {
   serial_init();
   video_init();
 
-  printf("\nosOs Kernel Initializing");
+  printf("\nOsOs Kernel Initializing");
 
   /* Initialize memory system. */
   palloc_init (user_page_limit);
@@ -81,138 +94,116 @@ void init() {
 
   printf("\nFinish booting.");
 
-  init_all_threads();
+  tid_b = thread_create("B", PRI_MAX, &B, NULL);
 
-  int i = 0;
-  while(true) {
-      enum interrupts_level old_level = interrupts_disable();
-      unsigned short red = 0xF800;
-      unsigned short green = 0x7E0;
-      SetForeColour(red + green);
-      printf("\nosOs v0.0 Forever: ");
-      printf(" Thread: %s", thread_current()->name);
-      printf(", Priority: %d", thread_current()->priority);
 
-      interrupts_set_level(old_level);
-  }
+  int tid_c = thread_create("C", PRI_MAX, &c, NULL);
+
+  thread_wait(tid_b);
+
+//  thread_create("shell", PRI_MAX, &shell, NULL);
+//    thread_wait(tid);
+
+  /* Initialize the task_sem to coordinate the main thread with workers */
+/*
+  sema_init(&task_sem, 0);
+
+  thread_create("Hello Test", PRI_MAX, &hello_test, NULL);
+  sema_down(&task_sem);
+
+  lock_init(&sync_node.mutex);
+  cond_init(&sync_node.cv);
+  sync_node.done = false;
+
+  thread_create("CV Test", PRI_MAX, &cv_test, NULL);
+  t_wait(&sync_node);
+ */
+  printf("\nContinue main thread.");
+  printf("\nAll done.");
 
   thread_exit ();
 }
 
-static void init_all_threads() {
-  lock_init(&lock_task);
-  thread_create("Thread 1", PRI_MAX, &task_1, NULL);
-  thread_create("Thread 2", PRI_MAX, &task_2, NULL);
-  thread_create("Thread 3", PRI_MAX, &task_3, NULL);
-  thread_create("Thread 4", PRI_MAX, &task_4, NULL);
-  thread_create("Thread 5", PRI_MAX, &task_5, NULL);
-  thread_create("Thread 6", PRI_MAX, &task_6, NULL);
+
+static void hello_test(void *aux) {
+  printf("\n");
+  printf("Hello from OsOS\n");
+  printf("\n");
+  sema_up(&task_sem);
+}
+/*
+static void t_wait(struct wait_node *wn)
+{
+  lock_acquire(&wn->mutex);
+  while (!wn->done) {
+    cond_wait(&wn->cv, &wn->mutex);
+  }
+  lock_release(&wn->mutex);
 }
 
-/* Task 1 prints the numbers from 0 to 50. */
-static void task_0(void *param) {
-  unsigned short green = 0x7E0;
+static void t_exit(struct wait_node *wn)
+{
+  lock_acquire(&wn->mutex);
+  wn->done = true;
+  cond_signal(&wn->cv,&wn->mutex);
+  lock_release(&wn->mutex);
+}
+
+static void cv_test(void *aux) {
+  printf("\n");
+  printf("Hello from CV Test\n");
+  printf("\n");
+  t_exit(&sync_node);
+}
+*/
+
+static void B(void *aux){
+  int j = 0;
+  for(j;j<100;j++){
+    printf("\nBBBBB");
+  }
+  printf("\n=================================\n");
+
+}
+
+static void c(void *aux){
+  thread_wait(tid_b);
+  int j = 0;
+  for(j;j<20;j++){
+    printf("\nCCCCC");
+  }
+  printf("\n=================================\n");
+
+}
+
+static void shell(void *aux){
+  uart_puts("Welcome to raspberry pi\n");
+  uart_puts("$");
+  unsigned char buf[128];
+  unsigned char ch;
   int i = 0;
-  while (i < 80) {
-      SetForeColour(green);
-      printf("\n%s %d - Counting %d", thread_current()->name, thread_current()->tid, i++);
+  while(1){
+    ch = uart_getc();
+    uart_putc(ch);
+    if(ch!='\n'){
+      buf[i++] = ch;
+    }else{
+      process_cmd(&buf, i);
+      i = 0;
+    }
   }
 }
 
-/* Task 1 prints all numbers. */
-static void task_1(void *param) {
-  unsigned short blue = 0x1f;
-  unsigned short green = 0x7E0;
-  int i = 0;
-  while (i < 150) {
-      int32_t x =  434343334;
-      int32_t y = 333443433;
-      int32_t z = x / y;
-      SetForeColour(blue + green);
-      printf("\n%s - Diving long numbers %d / %d = %d", thread_current()->name, x, y, z);
-  }
+void process_cmd(unsigned char * buf, int size){
+    unsigned char name[128];
+    unsigned char *arg1;
+    unsigned char *arg2;
+    unsigned char *p = buf;
+    unsigned char *q = name;
+    while(*p != ' '|| *p != '\n'){
+      q = *p;
+      q++;
+    }
+    q='\0';
+    uart_puts(name);
 }
-
-/* Task 2 Generates Random numbers */
-static void task_2(void *param) {
-  unsigned short green = 0x7E0;
-  SetForeColour(green);
-  printf("\nTrying to acquired lock: %s", thread_current()->name);
-
-  lock_acquire(&lock_task);
-  int i = 0;
-  while (i++ < 190) {
-      SetForeColour(green);
-      printf("\nLock Acquired by %s - Generating Random Num: %d", thread_current()->name,
-          (int) random_ulong());
-  }
-  lock_release(&lock_task);
-}
-
-/* Task 3 Greets USF. */
-static void task_3(void *param) {
-  int i = 0;
-  while (i++ < 200) {
-      test_swi_interrupt();
-  }
-}
-
-/* Task 4 prints 1 to 10. */
-static void task_4(void *param) {
-  unsigned short red = 0xF800;
-  unsigned short blue = 0x1f;
-  unsigned short green = 0x7E0;
-
-  printf("\nTrying to acquired lock: %s", thread_current()->name);
-
-  lock_acquire(&lock_task);
-  int i = 1;
-  while (i++ < 150) {
-    SetForeColour(blue + green + red);
-    printf("\nLock acquired by %s - Value %d", thread_current()->name, i);
-  }
-  lock_release(&lock_task);
-}
-
-/* Task 4 Blinking the ACK led */
-static void task_5(void *param) {
-  unsigned short red = 0xF800;
-
-  gpio_enable_function(16, 1);
-
-  int i = 1;
-  while (i++ < 260) {
-      SetForeColour(red);
-      printf("\n%s - Blinking ACK led ", thread_current()->name);
-      gpio_set_register(16, 0);
-      timer_msleep(20000);
-      gpio_set_register(16, 1);
-      timer_msleep(20000);
-  }
-}
-
-static int factorial(int number) {
-  if (number == 0 || number == 1) {
-      return 1;
-  }
-
-  return number * factorial (number - 1);
-}
-
-/* Task 6 calculates the factorial. */
-static void task_6(void *param) {
-  unsigned short blue = 0x1f;
-  unsigned short green = 0x7E0;
-
-  int i = 1;
-  while (i++ < 250) {
-      int number = i % 25;
-      int fac1 = factorial(number);
-      int fac2 = factorial(number);
-
-      ASSERT(fac1 == fac2);
-      SetForeColour(green + blue);
-      printf("\n%s - Factorial(%d) = %d", thread_current()->name, number, fac1);
-  }
-}
-

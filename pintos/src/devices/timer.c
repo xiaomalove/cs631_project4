@@ -11,6 +11,7 @@
 #include "bcm2835.h"
 #include "../threads/interrupt.h"
 #include "../threads/thread.h"
+#include "../threads/synch.h"
 
 #define TIMER_PERIODIC_INTERVAL 500000 // Time in miliseconds
 
@@ -23,6 +24,8 @@ struct bcm2835_system_timer_registers {
   volatile unsigned int C2;  /** System Timer Compare 2.  DO NOT USE; is used by GPU.  */
   volatile unsigned int C3;  /** System Timer Compare 3 */
 };
+
+
 
 /* Pointer to the timer registers. */
 static volatile struct bcm2835_system_timer_registers * const timer_registers =
@@ -37,10 +40,13 @@ static void timer_reset_timer_compare(int timer_compare);
 /* Sets the periodic interval of the timer. */
 static void timer_set_interval(int timer_compare, int milliseconds);
 
+struct list timer_wait_list;
+
 void timer_init() {
   printf("\nInitializing timer.....");
   interrupts_register_irq(IRQ_1, timer_irq_handler, "Timer Interrupt");
   timer_set_interval(IRQ_1, TIMER_PERIODIC_INTERVAL);
+//  list_init(&timer_wait_list);
 }
 
 /* Returns the timestamp. */
@@ -61,6 +67,18 @@ void timer_msleep(int milliseconds) {
   while (milliseconds > elapseTime) {
       elapseTime = timer_get_timestamp() - startTime;
   }
+//  int finish = timer_get_timestamp() + milliseconds;
+//      struct thread *t = thread_current();
+//      t->finish = finish;
+//      interrupts_disable();
+//      struct timer_wait_node twn;
+//      sema_init(&twn.sem,0);
+//      twn.t = t;
+//  //    list_insert(&timer_wait_list.tail,&twn.elem);
+//      list_push_back(&timer_wait_list,&twn.elem);
+//      interrupts_enable();
+//
+//      sema_down(&twn.sem);
 }
 
 /* Resets the System Timer Compare register (C0-C3) )in the Timer Control/Status register.
@@ -83,7 +101,7 @@ static void timer_reset_timer_compare(int timer_compare) {
  * IRQ line using the BCM2835 interrupt controller.
  */
 static void timer_irq_handler(struct interrupts_stack_frame *stack_frame) {
-  printf("\nKernel - Timer Interrupt Handler.");
+  //printf("\nKernel - Timer Interrupt Handler.");
 
   // The System Timer compare has to be reseted after the timer interrupt.
   timer_reset_timer_compare(IRQ_1);

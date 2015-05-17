@@ -106,6 +106,7 @@ struct thread {
 
   /* Owned by thread.c. */
   uint32_t magic;               /* Detects stack overflow. */
+  int finish;
 };
 
 void thread_init(void);
@@ -138,5 +139,7 @@ int thread_get_nice (void);
 void thread_set_nice (int);
 int thread_get_recent_cpu (void);
 int thread_get_load_avg (void);
+
+void thread_wait(tid_t tid);
 
 #endif /* THREADS_THREAD_H_ */
