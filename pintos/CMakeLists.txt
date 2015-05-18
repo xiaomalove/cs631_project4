@@ -13,6 +13,7 @@ set(SOURCE_FILES
     src/arm_asm/mailbox.s
     src/arm_asm/memoryCopy.s
     src/arm_asm/start.s
+<<<<<<< HEAD
     src/build/bitmap.o
     src/build/console.o
     src/build/contextSwitch.o
@@ -42,6 +43,8 @@ set(SOURCE_FILES
     src/build/thread.o
     src/build/timer.o
     src/build/video.o
+=======
+>>>>>>> jenniew/master
     src/devices/bcm2835.h
     src/devices/framebuffer.c
     src/devices/framebuffer.h
@@ -99,10 +102,14 @@ set(SOURCE_FILES
     src/threads/vaddr.h
     src/versions/README_V1_01
     src/config.txt
+<<<<<<< HEAD
     src/kernel.img
     src/kernel.ld
     src/kernel.list
     src/kernel.map
+=======
+    src/kernel.ld
+>>>>>>> jenniew/master
     src/Makefile
     src/README)
 

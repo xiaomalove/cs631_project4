@@ -11,6 +11,7 @@
 #include "bcm2835.h"
 #include "../threads/interrupt.h"
 #include "../threads/thread.h"
+#include "../threads/synch.h"
 
 #define TIMER_PERIODIC_INTERVAL 500000 // Time in miliseconds
 
@@ -36,6 +37,8 @@ static void timer_reset_timer_compare(int timer_compare);
 
 /* Sets the periodic interval of the timer. */
 static void timer_set_interval(int timer_compare, int milliseconds);
+
+struct list timer_wait_list;
 
 void timer_init() {
   printf("\nInitializing timer.....");

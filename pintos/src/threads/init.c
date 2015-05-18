@@ -18,6 +18,7 @@
 #include "synch.h"
 #include "thread.h"
 #include "vaddr.h"
+
 #include "../lib/string.h"
 
 /* -ul: Maximum number of pages to put into palloc's user pool. */
@@ -25,6 +26,7 @@ static size_t user_page_limit = SIZE_MAX;
 
 /* Tasks for the Threads. */
 static struct semaphore task_sem;
+
 
 static void hello_test(void *);
 static void A();
@@ -39,12 +41,15 @@ struct wait_node {
     struct condition cv;
     bool done;
 };
-
 static struct wait_node sync_node;
 
 static void t_wait(struct wait_node *wn);
 static void t_exit(struct wait_node *wn);
+
 static void cv_test(void *);
+//static void cv_test(void *);
+static void shell(void *);
+
 
 
 /*
@@ -55,11 +60,12 @@ static void cv_test(void *);
  */
 
 static void test_swi_interrupt() {
-    unsigned short green = 0x7E0;
-    SetForeColour(green);
-    generate_swi_interrupt(); // Function defined in interrupts.s
+  unsigned short green = 0x7E0;
+  SetForeColour(green);
+  generate_swi_interrupt(); // Function defined in interrupts.s
 }
 
+static int tid_b;
 
 /* Initializes the Operating System. The interruptions have to be disabled at entrance.
 *
@@ -68,6 +74,7 @@ static void test_swi_interrupt() {
 *  - Set the thread functionality
 */
 void init() {
+
 
     /* Initializes ourselves as a thread so we can use locks,
       then enable console locking. */
@@ -250,7 +257,8 @@ void command_bg(const char *str){
 
 void command_run(const char *str){
     if (strcmp(str,"A")==0){
-        thread_create(str,PRI_DEFAULT,&A,NULL);
+        tid_t tid = thread_create(str,PRI_DEFAULT,&A,NULL);
+        thread_wait(tid);
     } else if (strcmp(str,"B")==0){
         thread_create(str,PRI_DEFAULT,&B,NULL);
     } else if (strcmp(str,"C")==0){
@@ -260,7 +268,6 @@ void command_run(const char *str){
     }
     printf("$");
 }
-
 
 
 
