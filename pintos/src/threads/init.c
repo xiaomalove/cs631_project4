@@ -18,6 +18,7 @@
 #include "synch.h"
 #include "thread.h"
 #include "vaddr.h"
+#include "../lib/string.h"
 
 /* -ul: Maximum number of pages to put into palloc's user pool. */
 static size_t user_page_limit = SIZE_MAX;
@@ -104,12 +105,12 @@ void init() {
 //    thread_create("B", 36, &B, NULL);
 //    thread_create("C", 37, &C, NULL);
     thread_create("shell", PRI_MAX, &command_line, NULL);
-
+//    thread_create("print thread",37,&command_ts,NULL);
     lock_init(&sync_node.mutex);
     cond_init(&sync_node.cv);
     sync_node.done = false;
 
-    thread_create("CV Test", PRI_MAX, &cv_test, NULL);
+//    thread_create("CV Test", PRI_MAX, &cv_test, NULL);
     t_wait(&sync_node);
 
     printf("\nAll done.");
@@ -149,7 +150,7 @@ static void cv_test(void *aux) {
 
 static void A(){
     int i = 0;
-    for (i = 0; i < 100; ++i) {
+    for (i = 0; i < 50; ++i) {
         printf("AAAAAAAAAAAAAAAAAAAAAAAAAA\n");
     }
     sema_up(&task_sem);
@@ -157,45 +158,62 @@ static void A(){
 
 static void B(){
     int i = 0;
-    for (i = 0; i < 100; ++i) {
+    for (i = 0; i < 50; ++i) {
         printf("BBBBBBBBBBBBBBBBBBBBBBBBBB\n");
     }
-
     sema_up(&task_sem);
 }
 
 static void C(){
-    int i = 0;
-    for (i = 0; i < 100; ++i) {
-        printf("CCCCCCCCCCCCCCCCCCCCCCCCCC\n");
+//    int i = 0;
+//    for (i = 0; i < 50; ++i) {
+//        printf("CCCCCCCCCCCCCCCCCCCCCCCCCC\n");
+//
+//    }
+    while (1){
+
     }
 
     sema_up(&task_sem);
 }
 
-static void command_line(){
-    int i=0,j=0,k=0;
-    char buf[100];
+void command_line(){
+    int i=0,j=0,k=0,l=0,m=0;
+    char buf[100],buf1[100],buf2[100],func_name[100];
     memset(buf,0,100);
+    memset(func_name,0,100);
     char *ts = "ts";
     char *help = "help";
+    char *run = "run ";
+    char *bg = "bg ";
     char temp;
-    printf("\r\n");
+    printf("\n\n$");
     while (1){
         temp =  uart_getc();
         uart_putc(temp);
         if (temp!='\r'){
             buf[i++] = temp;
         } else{
-            printf("this is else++++++++++++++\n");
             j = strcmp(buf,ts);
             k = strcmp(buf,help);
-            if (j==0){
+            strlcpy(buf1,buf,5);
+            l = strcmp(buf1,run);
+            strlcpy(buf2,buf,4);
+            m = strcmp(buf2,bg);
+            if (j==0){        //if it is a ts call
                 command_ts();
-            } else if (k==0){
+            } else if (k==0){ //if it is a help call
                 command_help();
+            } else if (m==0){//if it is a bg call
+                const char* func = buf+3;
+                strlcpy(func_name,func,strlen(func)+1);
+                command_bg(func_name);
+            } else if (l==0){ //if it is a run call
+                const char* func = buf+4;
+                strlcpy(func_name,func,strlen(func)+1);
+                command_run(func_name);
             } else{
-                printf("wrong command\n");
+                printf("wrong command\n$");
             }
             i=0;
             memset(buf,0,100);
@@ -203,17 +221,47 @@ static void command_line(){
     }
 }
 
-static void command_help(){
-    printf("This is a help command\n");
-    printf("ts ---------\n");
-    printf("run ---------\n");
-    printf("bg ---------\n");
+void command_help(){
+    printf("ts --- Show threads information that tid,thread name,status\n");
+    printf("run <func>---launch a thread function and wait for completion\n");
+    printf("bg  <func>---launch a command in the background\n");
+    printf("$");
 }
 
-static void command_ts(){
+void command_ts(){
     int count = getNumberOfThreads();
     printf("There are %d threads\n",count);
-    thread_print_stats();
-    printf("This is a ts command\n");
+    thread_information_print();
+    printf("$");
 }
+
+void command_bg(const char *str){
+    if (strcmp(str,"A")==0){
+        thread_create(str,PRI_DEFAULT,&A,NULL);
+    } else if (strcmp(str,"B")==0){
+        thread_create(str,PRI_DEFAULT,&B,NULL);
+    } else if (strcmp(str,"C")==0){
+        thread_create(str,PRI_DEFAULT,&C,NULL);
+    } else if (strcmp(str,"hello_test")==0){
+        thread_create(str, PRI_MAX, &hello_test, NULL);
+    }
+    printf("$");
+}
+
+void command_run(const char *str){
+    if (strcmp(str,"A")==0){
+        thread_create(str,PRI_DEFAULT,&A,NULL);
+    } else if (strcmp(str,"B")==0){
+        thread_create(str,PRI_DEFAULT,&B,NULL);
+    } else if (strcmp(str,"C")==0){
+        thread_create(str,PRI_DEFAULT,&C,NULL);
+    } else if (strcmp(str,"hello_test")==0){
+        thread_create(str, PRI_MAX, &hello_test, NULL);
+    }
+    printf("$");
+}
+
+
+
+
 

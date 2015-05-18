@@ -99,7 +99,9 @@ struct thread {
   thread_func *function;        /* Function to call. */
   void *parameter;              /* Function parameter. */
   struct interrupts_stack_frame stack_frame; /* Stack frame of the thread */
-
+  int thread_start_time;         /*thread start time*/
+//    uint64_t thread_run_time;
+  uint64_t tick;
   struct list_elem allelem;     /* List element for all threads list. */
   /* Share between thread.c and synch.c. */
   struct list_elem elem;        /* List element. */
@@ -122,6 +124,7 @@ const char *thread_name (void);
 
 void thread_tick (struct interrupts_stack_frame *stack_frame);
 void thread_print_stats (void);
+void thread_information_print();
 int getNumberOfThreads();
 
 void thread_exit (void);

@@ -38,6 +38,8 @@ extern void save_and_switch_context(struct interrupts_stack_frame *cur_stack_fra
    of thread.h for details. */
 #define THREAD_MAGIC 0xcd6abf4b
 
+#define TIMER_PERIODIC_INTERVAL 500000 // Time in miliseconds
+
 /* List of processes in THREAD_READY state, that is, processes
    that are ready to run but not actually running. */
 static struct list ready_list;
@@ -121,6 +123,7 @@ void thread_init(void) {
   init_thread (initial_thread, "main", PRI_DEFAULT);
   initial_thread->status = THREAD_RUNNING;
   initial_thread->tid = allocate_tid();
+  initial_thread->tick = 0;
 }
 
 /* Does basic initialization of T as a blocked thread named NAME.
@@ -193,9 +196,12 @@ void thread_tick (struct interrupts_stack_frame *stack_frame) {
   /* Update statistics. */
   if (t == idle_thread) {
       idle_ticks++;
+      ;
   } else {
       kernel_ticks++;
+      t->tick =  kernel_ticks;
   }
+
 
   /* Enforce preemption. */
   ++thread_ticks;
@@ -249,7 +255,8 @@ tid_t thread_create(const char *name, int32_t priority,
   thread->priority = priority;
   thread->magic = THREAD_MAGIC;
   thread->function = (thread_func *) function;
-
+//    thread->thread_start_time = timer_get_timestamp();
+  thread->tick = 0;
   /* Setting the Stack Pointer. Note that we are subtracting -4, so when pg_round_down() is called
      to get the current thread, it returns the right page boundary. */
   thread->stack_frame.r13_sp = (uint32_t *) ((uint8_t *) thread + PGSIZE - 4);
@@ -387,7 +394,7 @@ static void schedule() {
     //printf("\nScheduling a thread in interrupt.");
     schedule_in_interrupt(cur, next);
   } else {
-    printf("\nScheduling a thread not in interrupt.");
+    //printf("\nScheduling a thread not in interrupt.");
     schedule_not_in_interrupt(cur, next);
   }
 }
@@ -450,7 +457,7 @@ void thread_schedule_tail(struct thread *prev, struct thread *next) {
      palloc().) */
   if (prev->status == THREAD_DYING && prev != initial_thread) {
        ASSERT (prev != next)
-       printf("\nReleasing resources of : %s, TID: %d", prev->name, prev->tid);
+       printf("\nReleasing resources of : %s, TID: %d\n$", prev->name, prev->tid);
 
        /* Releasing the memory that was assigned to this thread. */
        palloc_free_page(prev);
@@ -603,6 +610,33 @@ list_pri_high(struct list * list){
  int getNumberOfThreads(){
     int count = list_size(&all_list);
     return count;
+}
+
+//Print thread information
+void thread_information_print(){
+    struct list_elem * temp = list_front(&all_list);
+    struct thread * t;
+    printf("Tid\t Status\t\t\t Name\t\t Running Time\n");
+    while (temp!=list_tail(&all_list)){
+        t = list_entry (temp, struct thread, allelem);
+        switch (t->status){
+            case THREAD_RUNNING:
+                printf("%d\t THREAD_RUNNING\t %s \t\t %3d\n",t->tid,t->name,t->tick);
+                break;
+            case THREAD_READY:
+                printf("%d\t THREAD_READY\t %d \t\t %s\n",t->tid,t->tick,t->name);
+                break;
+            case THREAD_BLOCKED:
+                printf("%d\t THREAD_BLOCKED\t %3d \t%s \n",t->tid,t->tick,t->name);
+                break;
+            case THREAD_DYING:
+                printf("%d\t THREAD_DYING\t %d \t\t %s\n",t->tid,t->tick,t->name);
+                break;
+            default:
+                printf("==========wrong status==========\n");
+        }
+        temp = temp->next;
+    }
 }
 
 
